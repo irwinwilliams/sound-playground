@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sound Playground Recorder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+:root{--bg:#edf3f7;--surface:#fff;--surface-2:#f6f9fb;--ink:#1c2433;--muted:#5a6578;--line:#d3dde7;--ok:#1f9d5c;--ok-soft:#dff3e8;--rec:#e0475a;--accent:#5a5fdc;--pic:#fffaf0;--pic-line:#efe3c8;
+  --f-display:"Fredoka",system-ui,sans-serif;--f-letter:"Andika",system-ui,sans-serif;--f-body:"Atkinson Hyperlegible",system-ui,sans-serif}
+@media (prefers-color-scheme: dark){:root{--bg:#111723;--surface:#1a2231;--surface-2:#202a3b;--ink:#edf1f7;--muted:#9ba7ba;--line:#2d3749;--ok:#4cc987;--ok-soft:#173a2a;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:16px 16px 40px}
+h1,h2{font-family:var(--f-display);margin:0;line-height:1.15}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.top h1{font-size:28px}
+.btn{border:0;border-radius:999px;padding:9px 16px;background:var(--surface);box-shadow:inset 0 0 0 2px var(--line);font-weight:700;min-height:42px;display:inline-flex;align-items:center;gap:8px}
+.btn.primary{background:var(--ink);color:var(--bg);box-shadow:none}
+.btn[disabled]{opacity:.45;cursor:default}
+.panel{position:sticky;top:0;z-index:5;background:var(--surface);border-radius:24px;padding:18px;box-shadow:0 1px 0 var(--line),0 8px 24px rgba(0,0,0,.08);display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center}
+.cue{display:flex;align-items:center;gap:16px;min-width:0}
+.cuepic{width:96px;height:96px;background:var(--pic);border-radius:16px;box-shadow:inset 0 0 0 3px var(--pic-line);display:grid;place-items:center;flex:none}
+.cuepic svg{width:82%;height:82%}
+.cuepic:empty{display:none}
+.big{font-family:var(--f-letter);font-weight:700;font-size:72px;line-height:1}
+.say{color:var(--muted);font-size:15px}
+.ctl{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ctlrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mic{width:96px;height:96px;border-radius:50%;border:0;background:var(--rec);color:#fff;display:grid;place-items:center;box-shadow:0 6px 0 #a82d3d}
+.mic svg{width:44px;height:44px}
+.mic.on{animation:p .9s ease-in-out infinite;background:#c42f43}
+.mic.on svg{display:none}
+.mic.on::after{content:"";width:30px;height:30px;border-radius:6px;background:#fff}
+@keyframes p{50%{transform:scale(1.06)}}
+.level{height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+.level i{display:block;height:100%;width:0;background:var(--ok)}
+.status{font-size:15px;min-height:1.5em}
+.keys{font-size:12px;color:var(--muted)}
+kbd{font-family:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--surface-2)}
+.meter{height:10px;border-radius:999px;background:var(--line);overflow:hidden;margin:16px 0 6px}
+.meter i{display:block;height:100%;background:var(--ok)}
+.sec{margin-top:22px}
+.sec h2{font-size:20px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.clip{border:0;background:var(--surface);border-radius:14px;padding:10px 8px;box-shadow:inset 0 0 0 2px var(--line);display:flex;flex-direction:column;align-items:center;gap:2px;min-height:86px}
+.clip b{font-family:var(--f-letter);font-size:28px;line-height:1.1}
+.clip span{font-size:12px;color:var(--muted)}
+.clip.done{background:var(--ok-soft);box-shadow:inset 0 0 0 2px var(--ok)}
+.clip.done span{color:var(--ok);font-weight:700}
+.clip.cur{box-shadow:inset 0 0 0 3px var(--ink)}
+.help{background:var(--surface);border-radius:18px;padding:14px 18px;margin-top:14px;box-shadow:inset 0 0 0 1px var(--line);font-size:15px}
+.help ol{margin:6px 0 0;padding-left:20px}
+.warn{background:#fdf0d8;color:#5c3a00;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:15px}
+@media (max-width:720px){.panel{grid-template-columns:1fr;justify-items:center;text-align:center}.cue{flex-direction:column}.ctl{width:100%}.ctlrow{justify-content:center}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Sound Playground Recorder</h1>
+    <div class="ctlrow">
+      <label class="btn" for="importPack">Open a saved pack</label><input type="file" id="importPack" accept=".json,application/json" hidden>
+      <button class="btn primary" id="exportBtn">Save voice pack</button>
+    </div>
+  </div>
+  <div class="warn" id="micWarn" hidden></div>
+
+  <div class="panel">
+    <div class="cue"><div class="cuepic" id="cuePic"></div><div><div class="big" id="cueBig">m</div><div class="say" id="cueSay"></div></div></div>
+    <div class="ctl">
+      <div class="level"><i id="level"></i></div>
+      <div class="status" id="status">Tap the red button, say it, then tap again to stop.</div>
+      <div class="ctlrow">
+        <button class="btn" id="playBtn" disabled>Listen</button>
+        <button class="btn" id="prevBtn">Back</button>
+        <button class="btn primary" id="nextBtn">Next</button>
+      </div>
+      <div class="keys"><kbd>Space</kbd> record / stop · <kbd>P</kbd> listen · <kbd>→</kbd> next · <kbd>←</kbd> back</div>
+    </div>
+    <button class="mic" id="mic" aria-label="Record"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+  </div>
+
+  <div class="meter"><i id="meter"></i></div>
+  <div class="keys" id="count"></div>
+
+  <div class="help">
+    <b>How it works</b>
+    <ol>
+      <li>Pick any clip below (or go in order with Next) and record it. A new take replaces the old one. Silence at the ends is trimmed and volume is evened out.</li>
+      <li>Hold the stretchy sounds (a e i o u m n s f l r v sh th) steady for about 1½ seconds. Say the quick sounds short, with no “uh”.</li>
+      <li>Your clips are kept in this browser, so you can stop and come back. When you’re ready, click <b>Save voice pack</b>.</li>
+      <li>In the game, hold <b>Grown-ups</b>, open <b>Voice studio</b>, click <b>Import voice pack</b> and choose that file.</li>
+    </ol>
+  </div>
+
+  <div class="sec"><h2>Sounds</h2><div class="grid" id="gridSounds"></div></div>
+  <div class="sec"><h2>Words</h2><div class="grid" id="gridWords"></div></div>
+</div>
+
+<script>
+/*__CONTENT__*/
+let AC=null;
+function ctx(){ if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); } if(AC.state==='suspended') AC.resume(); return AC; }
+/*__ENCODE__*/
+const $=s=>document.querySelector(s);
+const clips={}; // key -> {wav,dur,at}
+let starting=false, cur=0, stream=null, mr=null, chunks=[], raf=0, timer=0;
+
+/* ---- persistence (IndexedDB, this browser only) ---- */
+let dbp=null;
+function idb(){ if(dbp) return dbp; dbp=new Promise((res,rej)=>{ const r=indexedDB.open('sp-recorder',1); r.onupgradeneeded=()=>r.result.createObjectStore('clips'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); return dbp; }
+async function idbPut(k,v){ try{ const d=await idb(); await new Promise((res,rej)=>{const t=d.transaction('clips','readwrite'); t.objectStore('clips').put(v,k); t.oncomplete=res; t.onerror=()=>rej(t.error);}); }catch(e){} }
+async function idbAll(){ try{ const d=await idb(); return await new Promise((res,rej)=>{ const out={}; const t=d.transaction('clips'); const c=t.objectStore('clips').openCursor(); c.onsuccess=()=>{const x=c.result; if(x){out[x.key]=x.value; x.continue();} else res(out);}; c.onerror=()=>rej(c.error); }); }catch(e){ return {}; } }
+
+/* ---- UI ---- */
+function label(k){ return SOUNDS[k]?SOUNDS[k].g:k; }
+function renderGrids(){
+  const card=k=>`<button class="clip ${clips[k]?'done':''} ${CLIP_KEYS[cur]===k?'cur':''}" data-k="${k}"><b>${label(k)}</b><span>${clips[k]?'Recorded':SOUNDS[k]?(SOUNDS[k].cont?'hold':'short'):'word'}</span></button>`;
+  $('#gridSounds').innerHTML=SOUND_ORDER.map(card).join('');
+  $('#gridWords').innerHTML=ALL_WORDS.map(card).join('');
+  document.querySelectorAll('.clip').forEach(b=>b.onclick=()=>{ select(CLIP_KEYS.indexOf(b.dataset.k)); window.scrollTo({top:0,behavior:'smooth'}); });
+  const n=CLIP_KEYS.filter(k=>clips[k]).length;
+  $('#meter').style.width=(n/CLIP_KEYS.length*100)+'%';
+  $('#count').textContent=`${n} of ${CLIP_KEYS.length} recorded`;
+}
+function select(i){
+  if(mr&&mr.state==='recording') return;
+  cur=(i+CLIP_KEYS.length)%CLIP_KEYS.length; const k=CLIP_KEYS[cur];
+  $('#cueBig').textContent=label(k);
+  $('#cuePic').innerHTML=SOUNDS[k]?'':pic(k);
+  $('#cueSay').textContent=SOUNDS[k]?SOUNDS[k].say+'.':`Say “${k}” clearly, at a normal pace.`;
+  $('#playBtn').disabled=!clips[k];
+  $('#status').textContent=clips[k]?`Recorded (${clips[k].dur.toFixed(1)}s). Listen, or record again to replace it.`:'Tap the red button, say it, then tap again to stop.';
+  renderGrids();
+}
+async function getMic(){
+  if(stream) return stream;
+  try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:true,autoGainControl:false}}); $('#micWarn').hidden=true; return stream; }
+  catch(e){ const w=$('#micWarn'); w.hidden=false; w.textContent='The microphone is blocked. Allow microphone access for this page in your browser (look for the mic or lock icon in the address bar), then try again.'; return null; }
+}
+async function toggleRec(){
+  ctx();
+  if(mr&&mr.state==='recording'){ mr.stop(); return; }
+  if(starting) return; starting=true;
+  const s=await getMic(); starting=false; if(!s) return;
+  chunks=[]; mr=new MediaRecorder(s);
+  mr.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+  mr.onstop=()=>{ clearTimeout(timer); cancelAnimationFrame(raf); $('#level').style.width='0'; $('#mic').classList.remove('on'); keep(new Blob(chunks,{type:mr.mimeType||'audio/webm'})); };
+  mr.start(); $('#mic').classList.add('on'); $('#status').textContent='Recording… tap again (or press Space) to stop.';
+  try{ const c=ctx(), an=c.createAnalyser(); an.fftSize=512; c.createMediaStreamSource(s).connect(an); const a=new Uint8Array(an.fftSize);
+    const tick=()=>{ an.getByteTimeDomainData(a); let m=0; for(const v of a) m=Math.max(m,Math.abs(v-128)); $('#level').style.width=Math.min(100,m/128*160)+'%'; raf=requestAnimationFrame(tick); }; tick(); }catch(e){}
+  timer=setTimeout(()=>{ if(mr&&mr.state==='recording') mr.stop(); },4000);
+}
+async function keep(blob){
+  const k=CLIP_KEYS[cur]; $('#status').textContent='Tidying up…';
+  try{
+    const res=encodeSamples(await decodeMono(blob));
+    clips[k]={wav:res.b64,dur:res.dur,at:Date.now()}; await idbPut(k,clips[k]);
+    $('#playBtn').disabled=false; play(k);
+    let msg=`Saved ${label(k)} (${res.dur.toFixed(1)}s).`;
+    if(SOUNDS[k]&&!SOUNDS[k].cont&&res.dur>.6) msg+=' Quick sounds work best short, with no “uh”.';
+    $('#status').textContent=msg+' Press → for the next one.'; renderGrids();
+  }catch(e){ $('#status').textContent='That didn’t work: '+(e&&e.message?e.message:'try again'); }
+}
+function b64ToBuf(b64){const bin=atob(b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u.buffer;}
+async function play(k){ const c=clips[k]; if(!c) return; const b=await ctx().decodeAudioData(b64ToBuf(c.wav)); const s=ctx().createBufferSource(); s.buffer=b; s.connect(ctx().destination); s.start(); }
+
+$('#mic').onclick=toggleRec;
+$('#playBtn').onclick=()=>play(CLIP_KEYS[cur]);
+$('#nextBtn').onclick=()=>select(cur+1);
+$('#prevBtn').onclick=()=>select(cur-1);
+document.addEventListener('keydown',e=>{
+  if(e.target.closest('input,select,textarea')) return;
+  if(e.code==='Space'){ e.preventDefault(); toggleRec(); }
+  else if(e.key==='ArrowRight'){ e.preventDefault(); select(cur+1); }
+  else if(e.key==='ArrowLeft'){ e.preventDefault(); select(cur-1); }
+  else if(e.key==='p'||e.key==='P'){ play(CLIP_KEYS[cur]); }
+});
+$('#exportBtn').onclick=()=>{
+  const n=Object.keys(clips).length; if(!n){ $('#status').textContent='Record at least one clip first.'; return; }
+  const pack={type:'sound-playground-voice-pack',v:1,made:new Date().toISOString(),clips};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(pack)],{type:'application/json'}));
+  const a=document.createElement('a'); a.href=url; a.download=`sound-playground-voices-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  $('#status').textContent=`Saved a voice pack with ${n} clip${n>1?'s':''}. Import it in the game’s Voice studio.`;
+};
+$('#importPack').onchange=async()=>{
+  const f=$('#importPack').files[0]; if(!f) return;
+  try{ const p=JSON.parse(await f.text()); if(p.type!=='sound-playground-voice-pack') throw 0;
+    let n=0; for(const [k,v] of Object.entries(p.clips||{})){ if(CLIP_KEYS.includes(k)&&v&&v.wav){ clips[k]=v; await idbPut(k,v); n++; } }
+    $('#status').textContent=`Opened ${n} clips from the pack.`; select(cur);
+  }catch(e){ $('#status').textContent='That file isn’t a Sound Playground voice pack.'; }
+};
+(async()=>{ Object.assign(clips,await idbAll()); const first=CLIP_KEYS.findIndex(k=>!clips[k]); select(first<0?0:first); })();
+</script>
+</body>
+</html>
