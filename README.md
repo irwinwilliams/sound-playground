@@ -19,7 +19,8 @@ Phonics games for 5–7 year olds, based on the sound-first approach of the *Men
 |---|---|
 | `src/game.html` | The game. Published as a claude.ai Artifact (page body only; the platform adds the document skeleton). |
 | `src/recorder.template.html` | The parent voice recorder. Content and audio code are injected from `src/game.html` at build time. |
-| `scripts/build.py` | Builds `dist/recorder.html` and `dist/game.html`. |
+| `scripts/build.py` | Builds `dist/index.html`, `dist/recorder.html` and `dist/game.html`. |
+| `.github/workflows/pages.yml` | Builds and deploys `dist/` to GitHub Pages. |
 
 ```sh
 python3 scripts/build.py
@@ -44,7 +45,18 @@ Attempt fields: `g` game (`b` blend, `t` twins), `w` word, `f` foil word, `c` co
 
 Outside claude.ai (e.g. `dist/game.html`), the game falls back to localStorage and a stand-in computer voice.
 
-## Publishing
+## GitHub Pages
+
+`.github/workflows/pages.yml` runs the build and publishes `dist/` on every push to `main`:
+
+- `/` landing page
+- `/recorder.html` the voice recorder (the microphone works here because Pages serves over https)
+- `/game.html` a test copy of the games (computer voice, progress kept in that browser only)
+
+Turn it on once: **Settings → Pages → Source: GitHub Actions**, or run
+`gh api -X POST repos/<owner>/sound-playground/pages -f build_type=workflow`.
+
+## Publishing to claude.ai
 
 Publish `src/game.html` as an Artifact with capabilities:
 
